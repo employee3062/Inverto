@@ -9,5 +9,5 @@ implementing a common data interface so that just swapping the brand names we ca
 
 ## Current Available Routes
 
-+ /health?brand={brandName} - tells us about whether the third party api service of that brand is healthy or not. ❤️
++ /health?brand={brandName} - tells us about whether the third party api service of that brand is healthy or not. ❤
 
