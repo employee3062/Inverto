@@ -8,38 +8,59 @@ implementing a common data interface so that just swapping the brand names we ca
 + enphase
 
 ## Schemas:
-1. System = {
-    id:str,
-    name:str,
-    power:decimal
-    sunrise:date
-    sunset:date,
-    inverters:str[]
+1. System =  
+```json
+{
+    "id":"str",
+    "name":"str",
+    "power":"decimal", // live
+    "sunrise":"HH:MM AM/PM",
+    "sunset":"HH:MM AM/PM",
+    "inverters":"str[]",
+    "timezone": "str",
+    "address": {
+        "city": "str",
+        "state": "str",
+        "country": "str",
+        "postal_code": "str"
+    },
 }
+```
 
-2. Inverter = {
-    id: str
-    sys_id:str,
-    power: decimal,
-    status: red/green/moon,
-    reason: str,
-    events: str[] containg array of events id.
+2. Inverter = 
+```json
+{
+    "id": "str",
+    "sys_id":"str",
+    "power": "decimal", // live
+    "status": "red/green/moon",
+    "reason": "str or None",
+    // use events for finding out the exact reason behind status being red. 
+    "events": "str[] containg array of events id"
 }
+```
 
-3. Stats = {
-    energy: decimal
-    co2_saving: decimal
-    duration: day,month,week,year
-    since: date (starting date for period)
+3. Stats = 
+```json
+{
+    "energy": "decimal",
+    "co2_saving": "decimal",
+    "since": "date (starting date for period)",
+    "duration":"day,month,week,year",
+    "last_reported": "date,time" // when this stats was gathered atlast.
 }
+```
 
-4. Event = {
-    id: str
-    msg: str,
-    code: int,
-    color: str,
-    assigned: str - inverter-id
+4. Event = 
+```json
+{
+    "id": "str",
+    "msg": "str",
+    "code": "int",
+    "assigned": "str -> inverter-id"
+    // it's moose who will assign color codes thos this events as per msg and code.
 }
+```
 
 ## Current Available Routes
 
@@ -52,6 +73,14 @@ implementing a common data interface so that just swapping the brand names we ca
     {
         "Authorization": "'Bearer ' + token",
         "Content-Type": "application/json"
+    }
+    ```
+    + response:
+    ```json 
+    {
+        401:{
+            "msg": "Unauthorized to access this route."
+        }
     }
     ```
 
@@ -199,16 +228,37 @@ implementing a common data interface so that just swapping the brand names we ca
 6. /systems/{brand}/{id}
     + desc: Get a single system of a specfic brand.
     + method: GET
-    + response: {
-        200:System,
+    + response: 
+    ```json
+    {
+        200:"System",
         400:{
-            msg: Invalid brand name.
+            "msg": "Invalid brand name."
         },
         404:{
-            msg: System not found.
+            "msg": "System not found."
         },
         500:{
-
+            "msg": "Internal server error."
         }
     }
+    ```
+7. /systems/status/{brand}/{id}
+    + desc: Get the system status accumulating based on it's inverter status and give and overall summary of which inverters are in which state and the overall state of the system.
+    + method: GET
+    + response:
+    ```json
+    {
+        200:{
+            "msg": {
+                "red":"str[]" , //inverter ids
+                "green": "str[]",
+                "moon": "str[]",
+                "status":"red/green/moon"
+            }
+        }
+    }
+
+8. /inverter/{brand}/id
+    + desc: Get a single Inverter.
 
