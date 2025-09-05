@@ -13,7 +13,8 @@ implementing a common data interface so that just swapping the brand names we ca
     name:str,
     power:decimal
     sunrise:date
-    sunset:date
+    sunset:date,
+    inverters:str[]
 }
 
 2. Inverter = {
@@ -42,101 +43,161 @@ implementing a common data interface so that just swapping the brand names we ca
 
 ## Current Available Routes
 
-### version 1
+### version 1.0.0
+
+0. verification criteria
+    + desc: Except `/auth` routes every routes needs inverto account verification via jwt token by passing it as bearer in `Authorization` header of every request.
+    + headers: 
+    ```json
+    {
+        "Authorization": "'Bearer ' + token",
+        "Content-Type": "application/json"
+    }
+    ```
 
 1. /auth/signin
-    + desc: logs into the inverto api platform the company user account that inverto will provide to customers.
+    + desc: SignIn into the inverto api with company's login credenetials.
     + method: POST
-    + body: {
-        usrname:str,
-        pass:str
+    + body:
+    ```json
+    {
+        "username": "str",
+        "password": "str"
     }
-    + response: {
+    ```
+    + response: 
+    ```json
+    {
         200:{
-            msg: successfully logged in.
-            jwt:{
-               access_token: str,
-               token_type: bearer,
-               expires_in: int, 
+            "msg": "Successfully logged in."
+            "jwt":{
+               "access_token": "str",
+               "token_type": "bearer",
+               "expires_in": "int", 
             }
-        }
+        },
         401:{
-            msg: mismatched credentials. 😵
+            "msg": "Mismatched credentials."
+        },
+        500:{
+            "msg": "Internal server error."
         }
     }
+    ```
 
 2. /register/fronius 
-    + desc: register an account holder for getting information from fronius brand by saving their credentials on their behalf.
+    + desc: Registers an inverto account holder for getting information from fronius brand by saving their credentials on their behalf.
     + method: POST
-    + body: {
-        ak_id:str,
-        ak_value:str,
-        usr_id:str,
-        pass:str
+    + body:
+    ```json
+    {
+        "ak_id":"str",
+        "ak_value":"str",
+        "usr_id":"str",
+        "pass":"str"
     }
-    + responses: {
+    ```
+    + responses: 
+    ```json
+    {
         200: {
-            msg: successfully registered for fronius. ⚡️
+            "msg": "Successfully registered for fronius."
         },
         400:{
-            msg: unauthorized for performing registration. 🏴‍☠️ 
+            "msg": "Unauthorized for performing registration."
         },
         401:{
-            msg: your fronius credentials are invalid.
+            "msg": "Your fronius credentials are invalid."
         },
         500:{
-            msg: something went wrong.
+            "msg": "Internal server error."
         }
     }
+    ```
 
-2. /health
-    + desc: check if all registered brands are healthy for the user.
+3. /register/enphase
+    + desc: Registers an inverto account holder for getting information from enphase brand by saving their credentials on their behalf.
+    + method: POST
+    + body:
+    ```json
+    {
+        "ak_id":"str",
+        "ak_value":"str",
+        "usr_id":"str",
+        "pass":"str",
+        "api_key":"str"
+    }
+    ```
+    + responses: 
+    ```json
+    {
+        200: {
+            "msg": "Successfully registered for enphase."
+        },
+        400:{
+            "msg": "Unauthorized for performing registration."
+        },
+        401:{
+            "msg": "Your enphase credentials are invalid."
+        },
+        500:{
+            "msg": "Internal server error."
+        }
+    }
+    ```
+
+4. /health
+    + desc: Checks if all registered brands are healthy for the company account.
     + method: GET
-    + response: {
+    + response: 
+    ```json
+    {
         200:{
-            msg: "All registered brands working properly" 
-            brands:str[]
+            "msg": "All registered brands working properly.", 
+            "brands":"str[]"
         },
         200:{
-            msg: "No brands registered" or
-                 "All registered brands are down"
+            "msg": "No brands registered. or All registered brands are down."
         },
         206:{
-            msg: A portion of registered brands working properly.
-            brands:str[]
+            "msg": "A portion of registered brands working properly.",
+            "brands":"str[]"
         },
         500:{
-            msg:Something went wrong.
+            "msg":"Internal server error."
         }
     }
+    ```
 
-3. /systems
-    + desc: Returns all systems accross all registered brands with a max limit of 50, you can use the brands query params to priotize and filter brands inspite of getting all brands.
+5. /systems
+    + desc: Returns all `systems` accross all registered brands with a max limit of `50`, you can use the `brands` query parameter to priotize and filter brands inspite of getting all brands.
     + method: GET
-    + headers: {
-        Authorization: 'Bearer ' + token,
-        Content-Type: 'application/json'
+    + params: 
+    ```json
+    {
+        "pageNo": "int",
+        "brands":"str[]" // empty includes all brand.
     }
-    + params: {
-        page: int
-        brands:str[] // empty means all.
-    }
-    + response: {
+    ```
+    + response: 
+    ```json
+    {
         200:{
-            systems: System[]
-            pages:int
+            "systems": "System[]",
+            "pages":"int"
         },
         200:{
-            msg: page index out of bounds.
-            pages:int
-        }
+            "msg": "Page index out of bounds.",
+            "pages":"int"
+        },
         500:{
-            msg: something went wrong.
+            "msg": "Internal server error."
         }
     }
+    ```
 
-4. /systems/{brand}/{id}
-    + desc: Get a single system from a specfic brand.
+6. /systems/{brand}/{id}
+    + desc: Get a single system of a specfic brand.
     + method: GET
     + response: {
         200:System,
