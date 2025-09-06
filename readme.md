@@ -18,6 +18,7 @@ implementing a common data interface so that just swapping the brand names we ca
     "sunset":"HH:MM AM/PM",
     "inverters":"str[]",
     "timezone": "str",
+    "brand": "str",
     "address": {
         "city": "str",
         "state": "str",
@@ -46,19 +47,20 @@ implementing a common data interface so that just swapping the brand names we ca
     "energy": "decimal",
     "co2_saving": "decimal",
     "since": "date (starting date for period)",
-    "duration":"day,month,week,year",
+    "duration":"day,week,month,year",
     "last_reported": "date,time" // when this stats was gathered atlast.
 }
 ```
 
-4. Event = 
+4. ErrEvent = 
 ```json
 {
     "id": "str",
     "msg": "str",
     "code": "int",
-    "assigned": "str -> inverter-id"
-    // it's moose who will assign color codes thos this events as per msg and code.
+    "when": "date,time",
+    "assigned": "str -> inverter-id/system-id"
+    // it's moose who will assign color codes to this events as per msg and code.
 }
 ```
 
@@ -225,7 +227,7 @@ implementing a common data interface so that just swapping the brand names we ca
     }
     ```
 
-6. /systems/{brand}/{id}
+6. /systems/{brand}/{sys_id}
     + desc: Get a single system of a specfic brand.
     + method: GET
     + response: 
@@ -243,7 +245,7 @@ implementing a common data interface so that just swapping the brand names we ca
         }
     }
     ```
-7. /systems/status/{brand}/{id}
+7. /systems/status/{brand}/{sys_id}
     + desc: Get the system status accumulating based on it's inverter status and give and overall summary of which inverters are in which state and the overall state of the system.
     + method: GET
     + response:
@@ -251,14 +253,149 @@ implementing a common data interface so that just swapping the brand names we ca
     {
         200:{
             "msg": {
-                "red":"str[]" , //inverter ids
+                "red":"str[]" , // inverter ids
                 "green": "str[]",
                 "moon": "str[]",
                 "status":"red/green/moon"
             }
+        },
+        400: {
+            "msg":"Not a valid brand."
+        },
+        404::{
+            "msg":"System not found."
+        },
+        500:{
+            "msg":"Internal server error."
         }
     }
 
-8. /inverter/{brand}/id
-    + desc: Get a single Inverter.
+8. /systems/stats/{brand}/{sys_id}
+    + desc: Get the stats of energy and co2 aggregated by a specfic time range
+    by a specfic system. Use the `brands` query param to get stats of selective brands only.
+    + method: GET
+    + params:
+    ```json 
+    {
+        "brands": "str[]",
+        "since": "date",
+        "duration": "day/week/month/year"
+    }
+    ``` 
+    + response:
+    ```json
+    {
+        200: "Stats",
+        400:{
+            "msg": "Not a valid brand.",
+        },
+        404: {
+            "msg":"Stats not available since then.", // or
+            "msg":"System not found",
+        },
+        500:{
+            "msg": "Internal server error"
+        }
+    }
+    ```
+
+9. /systems/err_events/{brand}/{sys_id}:
+    + desc: Find all the error events that occured in the system since a specific time range.
+    + method: GET
+    + params:
+    ```json
+    {
+        "since":"date",
+        "duration": "day,week,month,year",
+    }
+    ```
+    + response: 
+    ```json 
+    {
+        200: "ErrEvent[]",
+        400: {
+            "msg":"Not a valid brand."
+        },
+        404::{
+            "msg":"Error events not available since then",
+            "msg":"System not found."
+        },
+        500:{
+            "msg":"Internal server error."
+        }
+    }
+
+10. /inverters/{brand}/{sys_id}
+    + desc: Get all inverters under a system.
+    + method: GET
+    + response: 
+    ```json 
+    {
+        200: "Inverter[]",
+        400: {
+            "msg":"Not a valid brand."
+        },
+        404::{
+            "msg":"System not found."
+        },
+        500:{
+            "msg":"Internal server error."
+        }
+    }
+
+11. /inverters/stats/{brand}/{sys_id}/{inv_id}
+    + desc: Get the stats of energy and co2 aggregated by a specfic time range
+    by an inverter of a specfic system.
+    + method: GET
+    + params:
+    ```json 
+    {
+        "since": "date",
+        "duration": "day/week/month/year"
+    }
+    ``` 
+    + response:
+    ```json
+    {
+        200: "Stats",
+        400:{
+            "msg": "Not a valid brand.",
+        },
+        404: {
+            "msg":"Stats not available since then.", // or
+            "msg":"System not found", // or
+            "msg":"Inverter not found"
+        },
+        500:{
+            "msg": "Internal server error"
+        }
+    }
+    ```
+
+12. /inverters/err_events/{brand}/{sys_id}/{inv_id}:
+    + desc: Find all the error events that occured in the inverter of a system since a specific time.
+    + method: GET
+    + params:
+    ```json
+    {
+        "since":"date",
+        "duration": "day,week,month,year",
+    }
+    ```
+    + response: 
+    ```json 
+    {
+        200: "ErrEvent[]",
+        400: {
+            "msg":"Not a valid brand."
+        },
+        404::{
+            "msg":"System not found.", // or
+            "msg": "Inverter not found.", // or 
+            "msg": "Error events not available since then."
+        },
+        500:{
+            "msg":"Internal server error."
+        }
+    } 
 
