@@ -60,7 +60,7 @@ implementing a common data interface so that just swapping the brand names we ca
     "code": "int",
     "when": "date,time",
     "assigned": "str -> inverter-id/system-id"
-    // it's moose who will assign color codes to this events as per msg and code.
+    // it's moose who will assign color to this events as per msg and code.
 }
 ```
 
