@@ -80,7 +80,7 @@ implementing a common data interface so that just swapping the brand names we ca
     + response:
     ```json 
     {
-        401:{
+        "401": {
             "msg": "Unauthorized to access this route."
         }
     }
@@ -99,18 +99,18 @@ implementing a common data interface so that just swapping the brand names we ca
     + response: 
     ```json
     {
-        200:{
-            "msg": "Successfully logged in."
+        "200":{
+            "msg": "Successfully logged in.",
             "jwt":{
                "access_token": "str",
                "token_type": "bearer",
                "expires_in": "int", 
             }
         },
-        401:{
+        "401":{
             "msg": "Mismatched credentials."
         },
-        500:{
+        "500":{
             "msg": "Internal server error."
         }
     }
@@ -131,16 +131,16 @@ implementing a common data interface so that just swapping the brand names we ca
     + responses: 
     ```json
     {
-        200: {
+        "200": {
             "msg": "Successfully registered for fronius."
         },
-        400:{
+        "400":{
             "msg": "Unauthorized for performing registration."
         },
-        401:{
+        "401":{
             "msg": "Your fronius credentials are invalid."
         },
-        500:{
+        "500":{
             "msg": "Internal server error."
         }
     }
@@ -162,16 +162,16 @@ implementing a common data interface so that just swapping the brand names we ca
     + responses: 
     ```json
     {
-        200: {
+        "200": {
             "msg": "Successfully registered for enphase."
         },
-        400:{
+        "400":{
             "msg": "Unauthorized for performing registration."
         },
-        401:{
+        "401":{
             "msg": "Your enphase credentials are invalid."
         },
-        500:{
+        "500":{
             "msg": "Internal server error."
         }
     }
@@ -183,18 +183,16 @@ implementing a common data interface so that just swapping the brand names we ca
     + response: 
     ```json
     {
-        200:{
-            "msg": "All registered brands working properly.", 
+        "200":{
+            "msg": "All registered brands working properly.", // or
+            "msg": "No brands registered. or All registered brands are down.",
             "brands":"str[]"
         },
-        200:{
-            "msg": "No brands registered. or All registered brands are down."
-        },
-        206:{
+        "206":{
             "msg": "A portion of registered brands working properly.",
             "brands":"str[]"
         },
-        500:{
+        "500":{
             "msg":"Internal server error."
         }
     }
@@ -213,15 +211,15 @@ implementing a common data interface so that just swapping the brand names we ca
     + response: 
     ```json
     {
-        200:{
+        "200":{
             "systems": "System[]",
             "pages":"int"
         },
-        200:{
+        "404":{
             "msg": "Page index out of bounds.",
             "pages":"int"
         },
-        500:{
+        "500":{
             "msg": "Internal server error."
         }
     }
@@ -233,14 +231,14 @@ implementing a common data interface so that just swapping the brand names we ca
     + response: 
     ```json
     {
-        200:"System",
-        400:{
+        "200":"System",
+        "400":{
             "msg": "Invalid brand name."
         },
-        404:{
+        "404":{
             "msg": "System not found."
         },
-        500:{
+        "500":{
             "msg": "Internal server error."
         }
     }
@@ -251,7 +249,7 @@ implementing a common data interface so that just swapping the brand names we ca
     + response:
     ```json
     {
-        200:{
+        "200":{
             "msg": {
                 "red":"str[]" , // inverter ids
                 "green": "str[]",
@@ -259,25 +257,24 @@ implementing a common data interface so that just swapping the brand names we ca
                 "status":"red/green/moon"
             }
         },
-        400: {
+        "400": {
             "msg":"Not a valid brand."
         },
-        404::{
+        "404":{
             "msg":"System not found."
         },
-        500:{
+        "500":{
             "msg":"Internal server error."
         }
     }
 
 8. /systems/stats/{brand}/{sys_id}
     + desc: Get the stats of energy and co2 aggregated by a specfic time range
-    by a specfic system. Use the `brands` query param to get stats of selective brands only.
+    by a specfic system.
     + method: GET
     + params:
     ```json 
     {
-        "brands": "str[]",
         "since": "date",
         "duration": "day/week/month/year"
     }
@@ -285,15 +282,15 @@ implementing a common data interface so that just swapping the brand names we ca
     + response:
     ```json
     {
-        200: "Stats",
-        400:{
+        "200": "Stats",
+        "400":{
             "msg": "Not a valid brand.",
         },
-        404: {
+        "404": {
             "msg":"Stats not available since then.", // or
             "msg":"System not found",
         },
-        500:{
+        "500":{
             "msg": "Internal server error"
         }
     }
@@ -312,15 +309,15 @@ implementing a common data interface so that just swapping the brand names we ca
     + response: 
     ```json 
     {
-        200: "ErrEvent[]",
-        400: {
+        "200": "ErrEvent[]",
+        "400": {
             "msg":"Not a valid brand."
         },
-        404::{
+        "404":{
             "msg":"Error events not available since then",
             "msg":"System not found."
         },
-        500:{
+        "500":{
             "msg":"Internal server error."
         }
     }
@@ -331,14 +328,14 @@ implementing a common data interface so that just swapping the brand names we ca
     + response: 
     ```json 
     {
-        200: "Inverter[]",
-        400: {
+        "200": "Inverter[]",
+        "400": {
             "msg":"Not a valid brand."
         },
-        404::{
+        "404":{
             "msg":"System not found."
         },
-        500:{
+        "500":{
             "msg":"Internal server error."
         }
     }
@@ -357,16 +354,16 @@ implementing a common data interface so that just swapping the brand names we ca
     + response:
     ```json
     {
-        200: "Stats",
-        400:{
+        "200": "Stats",
+        "400":{
             "msg": "Not a valid brand.",
         },
-        404: {
+        "404": {
             "msg":"Stats not available since then.", // or
             "msg":"System not found", // or
             "msg":"Inverter not found"
         },
-        500:{
+        "500":{
             "msg": "Internal server error"
         }
     }
@@ -385,16 +382,16 @@ implementing a common data interface so that just swapping the brand names we ca
     + response: 
     ```json 
     {
-        200: "ErrEvent[]",
-        400: {
+        "200": "ErrEvent[]",
+        "400": {
             "msg":"Not a valid brand."
         },
-        404::{
+        "404":{
             "msg":"System not found.", // or
             "msg": "Inverter not found.", // or 
             "msg": "Error events not available since then."
         },
-        500:{
+        "500":{
             "msg":"Internal server error."
         }
     } 
