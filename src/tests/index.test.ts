@@ -9,10 +9,3 @@ describe('inverto health check', () => {
     expect(response).toBe('It\'s Inverto')
   })
 })
-
-//  add a dummy test to make sure tests are running on PR new commits
-describe('dummy test', () => {
-  it('should return true', () => {
-    expect(true).toBe(true)
-  })
-})
