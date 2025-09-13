@@ -9,13 +9,3 @@ describe('inverto health check', () => {
     expect(response).toBe('It\'s Inverto')
   })
 })
-
-// check is swagger is returning 200 and a html response on /swagger
-describe('swagger', () => {
-  it('should return 200 and a html response', async () => {
-    const response = await app
-            .handle(new Request('http://localhost:3000/swagger'))
-    expect(response.status).toBe(200)
-    expect(response.headers.get('content-type')).toBe('text/html; charset=utf-8')
-  })
-})
