@@ -1,0 +1,370 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Holds the entire architecture for the Inverto API. Will split later via nested stacks.
+
+Parameters:
+  LambdaFunctionName:
+    Type: String
+    Description: The name of the Lambda function to be created.
+    Default: inverto-lambda-function
+  SubDomain:
+    Type: String
+    Description: The subdomain for the API Gateway custom domain.
+    Default: inverto
+  RootDomain:
+    Description: The root domain for the API Gateway custom domain.
+    Type: String
+  PublicCertificateArn:
+    Description: The ARN of the public ACM certificate in us-east-1 for the custom domain.
+    Type: String
+
+Resources:
+  # Authentication Resources
+
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: inverto-user-pool
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+      MfaConfiguration: OFF
+      Schema:
+        - Name: email
+          Required: true
+          Mutable: true
+        - Name: name
+          Required: true
+          Mutable: true
+        - Name: phone_number
+          Required: false
+          Mutable: true
+
+  ApiGatewayAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      Name: InvertoCognitoAuthorizer
+      Type: COGNITO_USER_POOLS
+      IdentitySource: method.request.header.Authorization
+      RestApiId: !Ref ApiGateway
+      ProviderARNs:
+        - !Ref UserPool
+
+  # Permissions and Roles 
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: inverto-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: inverto-lambda-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cognito-idp:AdminGetUser
+                  - cognito-idp:ListUsers
+                  - cognito-idp:AdminCreateUser
+                  - cognito-idp:AdminDeleteUser
+                  - cognito-idp:AdminUpdateUserAttributes
+                  - cognito-idp:AdminSetUserPassword
+                Resource: !Sub arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPool}
+              - Effect: Allow             
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:DescribeSecret
+                  - secretsmanager:CreateSecret
+                  - secretsmanager:PutSecretValue
+                Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:inverto/*
+                Condition:
+                  StringLike:
+                    secretsmanager:Name: "inverto/*"
+              - Effect: Allow           
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${LambdaFunctionName}:*
+
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*
+
+  # Compute Resources
+  
+  BunLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      LayerName: bun-runtime-layer
+      Description: Bun runtime layer for Lambda functions
+      Content:
+        S3Bucket: storage3062
+        S3Key: personal/bun-lambda-layer.zip  
+      CompatibleRuntimes:
+        - provided.al2
+      CompatibleArchitectures:
+        - arm64
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref LambdaFunctionName
+      Handler: src/index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Runtime: provided.al2
+      Code:
+        ZipFile: |
+          export default {
+            async fetch(request) {
+              console.log(request.headers.get("x-amzn-function-arn"));
+              const responseBody = {
+                message: "Response from Lambda Bun runtime"
+              };
+              return new Response(JSON.stringify(responseBody), {
+                status: 200,
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              });
+            },
+          };
+      MemorySize: 128
+      Timeout: 10
+      Layers:
+        - !Ref BunLayer
+
+  LambdaVersion:
+    Type: AWS::Lambda::Version
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Description: 0.0.0
+
+  LambdaAlias:
+    Type: AWS::Lambda::Alias
+    Properties:
+      Name: Green
+      FunctionName: !Ref LambdaFunction
+      FunctionVersion: !GetAtt LambdaVersion.Version
+
+  ApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub "${SubDomain} API"
+      Description: API for ${SubDomain} subdomain.
+      FailOnWarnings: true
+
+  # Routes Resources
+
+  HealthResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: health
+      RestApiId: !Ref ApiGateway
+  HealthMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: GET
+      ResourceId: !Ref HealthResource
+      RestApiId: !Ref ApiGateway
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: GET
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}:Green/invocations
+
+  AuthResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: auth
+      RestApiId: !Ref ApiGateway
+  SigninResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref AuthResource
+      PathPart: signin
+      RestApiId: !Ref ApiGateway
+  ApiAuthSigninMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: POST
+      ResourceId: !Ref SigninResource
+      RestApiId: !Ref ApiGateway
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}:Green/invocations
+
+  CatchAllResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: "{proxy+}"
+      RestApiId: !Ref ApiGateway  
+  CatchAllMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: ANY
+      ResourceId: !Ref CatchAllResource
+      RestApiId: !Ref ApiGateway
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref ApiGatewayAuthorizer
+      ApiKeyRequired: true
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}:Green/invocations
+
+  # API Configuration Resources
+  ApiDeployment:
+    DependsOn: 
+      - ApiAuthSigninMethod
+      - CatchAllMethod
+      - HealthMethod
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref ApiGateway
+      StageName: prod
+
+  ApiDomainName:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      DomainName: !Sub "${SubDomain}.${RootDomain}"
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      RegionalCertificateArn: !Ref PublicCertificateArn
+      SecurityPolicy: TLS_1_2
+  
+  ApiBasePathMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    DependsOn: ApiDeployment
+    Properties:
+      DomainName: !Ref ApiDomainName
+      RestApiId: !Ref ApiGateway
+      Stage: prod
+  
+  ApiRecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Ref RootDomain
+      Name: !Sub "${SubDomain}.${RootDomain}"
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt ApiDomainName.RegionalDomainName
+        HostedZoneId: !GetAtt ApiDomainName.RegionalHostedZoneId
+      TTL: '60'
+  
+  # API Pricing Plans
+  SilverPlan:
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      UsagePlanName: SilverPlan
+      Description: Silver plan with 10,000 requests per hour
+      Quota:
+        Limit: 10000
+        Period: HOUR
+      Throttle:
+        RateLimit: 5        # 5 req/s (steady rate)
+        BurstLimit: 10      # Allow short bursts up to 10 req/s
+      ApiStages:
+        - ApiId: !Ref ApiGateway
+          Stage: prod
+
+  GoldPlan:
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      UsagePlanName: GoldPlan
+      Description: Gold plan with 50,000 requests per hour
+      Quota:
+        Limit: 50000
+        Period: HOUR
+      Throttle:
+        RateLimit: 15       # 15 req/s steady rate
+        BurstLimit: 30      # Allow bursts up to 30 req/s
+      ApiStages:
+        - ApiId: !Ref ApiGateway
+          Stage: prod
+
+  PlatinumPlan:
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      UsagePlanName: PlatinumPlan
+      Description: Platinum plan with 100,000 requests per hour
+      Quota:
+        Limit: 100000
+        Period: HOUR
+      Throttle:
+        RateLimit: 30       # 30 req/s steady rate
+        BurstLimit: 60      # Allow bursts up to 60 req/s
+      ApiStages:
+        - ApiId: !Ref ApiGateway
+          Stage: prod
+
+  # API Logging Setup
+  ApiGatewayLogsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ApiGatewayCloudWatchLogsRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+
+  ApiGatewayAccountSettings:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn: !GetAtt ApiGatewayLogsRole.Arn
+
+  ApiGatewayLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/api-gateway/${ApiGateway}"
+      RetentionInDays: 30
+
+  ApiGatewayStageWithLogs:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      StageName: prod
+      Description: Production stage with logging enabled
+      RestApiId: !Ref ApiGateway
+      DeploymentId: !Ref ApiDeployment
+      MethodSettings:
+        - ResourcePath: "/*"
+          HttpMethod: "*"
+          LoggingLevel: INFO         
+          DataTraceEnabled: true
+      AccessLogSetting:
+        DestinationArn: !GetAtt ApiGatewayLogGroup.Arn
+        Format: >
+          { "requestId":"$context.requestId", "ip":"$context.identity.sourceIp", "caller":"$context.identity.caller", "user":"$context.identity.user", "requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod", "resourcePath":"$context.resourcePath", "status":"$context.status", "protocol":"$context.protocol", "responseLength":"$context.responseLength" }
+          
