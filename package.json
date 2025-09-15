@@ -4,7 +4,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.ts",
-    "deploy": "aws cloudformation deploy --template-file ./aws/architecture.yaml --stack-name inverto --para"
+    "deploy": "./deploy.sh"
   },
   "dependencies": {
     "@elysiajs/swagger": "^1.3.1",
