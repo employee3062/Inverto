@@ -4,6 +4,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.ts",
+    "build": "bun build --minify-whitespace --minify-syntax --target bun --outfile dist/server.js ./src/index.ts",
     "deploy": "./deploy.sh",
     "destroy": "aws cloudformation delete-stack --stack-name inverto-stack"
   },
