@@ -212,8 +212,8 @@ Resources:
   ApiDomainRecordSet:
     Type: AWS::Route53::RecordSet
     Properties:
-      HostedZoneName: !Sub "${RootDomain}"
-      Name: !GetAtt ApiDomainName.DomainName
+      HostedZoneName: !Sub "${RootDomain}."
+      Name: !Sub "${SubDomain}.${RootDomain}"
       Type: A
       AliasTarget:
         DNSName: !GetAtt ApiDomainName.RegionalDomainName
@@ -281,7 +281,7 @@ Resources:
   LambdaPermissionForApiGateway:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !Ref FunctionName
+      FunctionName: !Ref LambdaFunction
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*
@@ -337,25 +337,14 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Ref FunctionName
-      Handler: src/index.handler
-      Role: !GetAtt LambdaRole.Arn
+      Handler: handler.fetch
+      Role: !GetAtt ApiGatewayLambdaRole.Arn
       Runtime: provided.al2
+      Architectures:
+        - arm64
       Code:
-        ZipFile: |
-          export default {
-            async fetch(request) {
-              console.log(request.headers.get("x-amzn-function-arn"));
-              const responseBody = {
-                message: "Response from Lambda Bun runtime"
-              };
-              return new Response(JSON.stringify(responseBody), {
-                status: 200,
-                headers: {
-                  "Content-Type": "application/json",
-                },
-              });
-            },
-          };
+        S3Bucket: storage3062
+        S3Key: personal/handler.zip
       MemorySize: 128
       Timeout: 10
       Layers:
