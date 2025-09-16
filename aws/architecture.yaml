@@ -344,7 +344,7 @@ Resources:
         - arm64
       Code:
         S3Bucket: storage3062
-        S3Key: personal/handler.zip
+        S3Key: personal/bio-data.zip
       MemorySize: 128
       Timeout: 10
       Layers:
