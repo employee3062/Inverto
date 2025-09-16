@@ -2,7 +2,8 @@
     "yaml.schemas": {
         "https://raw.githubusercontent.com/awslabs/goformation/master/schema/cloudformation.schema.json": [
             "file:///Users/rahat3062/Desktop/Inverto/aws/user-pool.yaml",
-            "file:///Users/rahat3062/Desktop/Inverto/aws/architecture.yaml"
+            "file:///Users/rahat3062/Desktop/Inverto/aws/architecture.yaml",
+            "file:///Users/rahat3062/Desktop/Inverto/aws/a2.yaml"
         ]
     },
     "yaml.customTags": [
