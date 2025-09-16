@@ -4,7 +4,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.ts",
-    "deploy": "./deploy.sh"
+    "deploy": "./deploy.sh",
+    "destroy": "aws cloudformation delete-stack --stack-name inverto-stack"
   },
   "dependencies": {
     "@elysiajs/swagger": "^1.3.1",
