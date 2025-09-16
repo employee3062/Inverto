@@ -349,6 +349,9 @@ Resources:
       Timeout: 10
       Layers:
         - !Ref BunLayer
+      Environment:
+        Variables:
+          SERVER_MODE: OFF
 
   LambdaVersion:
     Type: AWS::Lambda::Version
