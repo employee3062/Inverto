@@ -281,10 +281,10 @@ Resources:
   LambdaPermissionForApiGateway:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !Ref LambdaFunction
+      FunctionName: !Sub ${LambdaFunction.Arn}:Green
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/*/*
 
   # assign the account settings with API gateway role for cloudwatch logs
   ApiGatewayAccount:
@@ -361,6 +361,6 @@ Resources:
     Properties:
       Name: Green
       FunctionName: !Ref LambdaFunction
-      FunctionVersion: !GetAtt LambdaVersion.Version
+      FunctionVersion: $LATEST
 
 
