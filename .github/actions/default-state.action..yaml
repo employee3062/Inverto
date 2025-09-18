@@ -1,0 +1,20 @@
+name: Default State
+description: Sets the default state by installing nodemodules after checking out the code.
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+    - name: Set up bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: latest
+    - name: Cache the node_modules based on bun.lock
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+    - name: Install dependencies
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: bun install

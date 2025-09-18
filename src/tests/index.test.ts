@@ -2,11 +2,11 @@ import { describe, expect, it } from 'bun:test'
 import { app } from '../index'
 
 describe('inverto health check', () => {
-  it('should return "It\'s Inverto"', async () => {
+  it('should return "It\'s Inverto ${version}"', async () => {
     const response = await app
             .handle(new Request('http://localhost:3000'))
             .then((res) => res.text())
-    expect(response).toBe('It\'s Inverto')
+    expect(response).toBe('It\'s Inverto v9')
   })
 })
 
