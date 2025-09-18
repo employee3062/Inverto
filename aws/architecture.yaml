@@ -419,7 +419,7 @@ Resources:
             Action: sts:AssumeRoleWithWebIdentity
             Condition:
               StringLike:
-                token.actions.githubusercontent.com:sub: repo:employee3062/Inverto:refs/heads/main
+                token.actions.githubusercontent.com:sub: repo:employee3062/Inverto:refs/heads/*
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
       Policies:
