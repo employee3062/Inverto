@@ -17,7 +17,7 @@ jobs:
         with:
           aws-region: ca-central-1
           # This should be the role ARN you stored as a secret
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }} 
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: GitHubActions
       - name: Checkout code
         uses: actions/checkout@v5
