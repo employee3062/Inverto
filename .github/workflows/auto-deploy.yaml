@@ -1,0 +1,12 @@
+name: Auto Deploy to AWS
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dummy Step
+        run: echo "This is a placeholder for the auto-deploy workflow."
+    
