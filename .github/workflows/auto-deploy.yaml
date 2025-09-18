@@ -11,19 +11,13 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME != '' && secrets.AWS_ROLE_TO_ASSUME || 'default-role-arn' }}
     steps:
-      - name: Throw error if default role is used
-        if: ${{ env.ROLE_TO_ASSUME == 'default-role-arn' }}
-        run: |
-          echo "Error: AWS_ROLE_TO_ASSUME secret is not set. Please set it to a valid role ARN."
-          exit 1
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: ca-central-1
-          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          # This should be the role ARN you stored as a secret
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }} 
           role-session-name: GitHubActions
       - name: Checkout code
         uses: actions/checkout@v5
@@ -31,4 +25,3 @@ jobs:
         uses: ./.github/actions/default-setup
       - name: Deploy to Lambda
         run: bun run push
-    
