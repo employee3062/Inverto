@@ -75,13 +75,26 @@ Resources:
       ParentId: !GetAtt ApiGateway.RootResourceId
       PathPart: swagger
       RestApiId: !Ref ApiGateway
+  SwaggerMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: GET
+      ResourceId: !Ref SwaggerResource
+      RestApiId: !Ref ApiGateway
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: AWS_PROXY
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}:Green/invocations
   SwaggerProxyResource:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !Ref SwaggerResource
       PathPart: "{proxy+}"
       RestApiId: !Ref ApiGateway
-  SwaggerMethod:
+  SwaggerProxyMethod:
     Type: AWS::ApiGateway::Method
     Properties:
       HttpMethod: GET
@@ -136,7 +149,6 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}:Green/invocations
 
-
   # we will deploy the api gateway standalone for now without stages
   ApiDeployment:
     Type: AWS::ApiGateway::Deployment
@@ -145,6 +157,7 @@ Resources:
       - ApiAuthSigninMethod
       - CatchAllMethod
       - SwaggerMethod
+      - SwaggerProxyMethod
     Properties:
       RestApiId: !Ref ApiGateway
     Metadata:
@@ -394,7 +407,6 @@ Resources:
       FunctionName: !Ref LambdaFunction
       FunctionVersion: !GetAtt LambdaVersion.Version
 
-  # create a role for github oidc which is able to push to lambda-function, publish version and also change aliases and weights
   GithubOidcRole:
     Type: AWS::IAM::Role
     Properties:
@@ -407,7 +419,7 @@ Resources:
             Action: sts:AssumeRoleWithWebIdentity
             Condition:
               StringLike:
-                token.actions.githubusercontent.com:sub: "repo:employee3062/Inverto:main"
+                token.actions.githubusercontent.com:sub: repo:employee3062/Inverto:refs/heads/main
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
       Policies:
@@ -422,9 +434,10 @@ Resources:
                   - lambda:UpdateAlias
                   - lambda:GetAlias
                   - lambda:GetFunction
+                  - lambda:UpdateFunctionConfiguration
+                  - lambda:GetFunctionConfiguration
+                  - lambda:ListAliases
                 Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaFunction}
-
-  # setting up OIDC provider for github so we can use github actions to deploy
   GithubOidc:
     Type: AWS::IAM::OIDCProvider
     Properties:
@@ -433,3 +446,8 @@ Resources:
         - sts.amazonaws.com
       ThumbprintList:
         - 6938fd4d98bab03faadb97b34396831e3780aea1
+        
+Outputs:
+  GithubOidcRoleArn:
+    Description: "ARN of the IAM Role for GitHub OIDC"
+    Value: !GetAtt GithubOidcRole.Arn

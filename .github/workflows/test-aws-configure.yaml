@@ -1,0 +1,13 @@
+name: Test AWS Configure
+on:
+  workflow_dispatch:
+jobs:
+  test-aws-configure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: ca-central-1
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: GitHubActions
