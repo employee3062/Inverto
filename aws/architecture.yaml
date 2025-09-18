@@ -420,7 +420,6 @@ Resources:
             Condition:
               StringLike:
                 token.actions.githubusercontent.com:sub: repo:employee3062/Inverto:refs/heads/*
-              StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
       Policies:
         - PolicyName: GithubActions
