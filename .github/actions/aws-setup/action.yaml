@@ -1,0 +1,21 @@
+name: setup AWS base
+description: Set up AWS credentials,region and node_dependencies
+inputs:
+  aws-region:
+    description: 'AWS Region'
+    required: false
+    default: 'ca-central-1'
+  role-to-assume:
+    description: 'Role to assume'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v5
+      with:
+        aws-region: ${{ inputs.aws-region }}
+        role-to-assume: ${{ inputs.role-to-assume }}
+        role-session-name: GitHubActions
+    - name: Default Setup
+      uses: ./.github/actions/default-setup

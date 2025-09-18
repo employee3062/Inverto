@@ -7,6 +7,7 @@ import {
   GetFunctionCommand,
 } from "@aws-sdk/client-lambda";
 import { readFile } from "fs/promises";
+import { getSortedBlueGreenVersions } from "./lib";
 
 const lambda = new LambdaClient({ region: "ca-central-1" });
 
@@ -21,24 +22,28 @@ async function blueGreenDeploy({
   blueTraffic?: number;
   deploymentPackagePath?: string;
 }) {
-  // 1. Get the current alias ("blue" version)
-  const greenAliasData = await lambda.send(
+  // 1. Get the current alias info
+  const aliasData = await lambda.send(
     new GetAliasCommand({
       FunctionName: functionName,
       Name: greenAlias,
     })
   );
-  const blueVersion = greenAliasData.FunctionVersion!;
-  console.log(`Current blue version: ${blueVersion}`);
 
-  // if bluewVersion is not an integer, throw error
-  if (!/^\d+$/.test(blueVersion)) {
-    throw new Error(
-      `Current blue version (${blueVersion}) is not a valid version number`
-    );
+  // 2. Determine blue and green versions using lib.ts
+  const blueGreen = getSortedBlueGreenVersions(aliasData);
+
+  // If only one version exists, it's the blue version (old),
+  // and new green version will be the newly published one.
+  let blueVersion: number;
+  if (!blueGreen) {
+    blueVersion = Number(aliasData.FunctionVersion);
+  } else {
+    const [_, green] = blueGreen;
+    blueVersion = green.version; // previous green becomes blue
   }
 
-  // 2. Upload new code to $LATEST
+  // 3. Upload new code to $LATEST
   const zipBuffer = await readFile(deploymentPackagePath);
   await lambda.send(
     new UpdateFunctionCodeCommand({
@@ -48,12 +53,10 @@ async function blueGreenDeploy({
     })
   );
 
-  // 3. Wait until function code update is finished
+  // 4. Wait until function code update finishes
   let updateStatus = "";
   do {
-    const fn = await lambda.send(
-      new GetFunctionCommand({ FunctionName: functionName })
-    );
+    const fn = await lambda.send(new GetFunctionCommand({ FunctionName: functionName }));
     updateStatus = fn.Configuration?.LastUpdateStatus || "";
     if (updateStatus === "InProgress") {
       await new Promise((res) => setTimeout(res, 2000));
@@ -62,33 +65,33 @@ async function blueGreenDeploy({
     }
   } while (updateStatus !== "Successful");
 
-  // 4. Publish a new version (new "green" version)
-  const publishResp = await lambda.send(
-    new PublishVersionCommand({ FunctionName: functionName })
-  );
-  const newVersion = publishResp.Version!;
+  // 5. Publish new version (new green version)
+  const publishResp = await lambda.send(new PublishVersionCommand({ FunctionName: functionName }));
+  const newVersion = Number(publishResp.Version);
 
-  // 5. Update alias with traffic shifting
+  // 6. Update alias to point to new green version
+  blueTraffic = Math.round(blueTraffic * 10) / 10;
   await lambda.send(
     new UpdateAliasCommand({
       FunctionName: functionName,
       Name: greenAlias,
-      FunctionVersion: newVersion,
+      FunctionVersion: newVersion.toString(),
       RoutingConfig: {
-        AdditionalVersionWeights: { [blueVersion]: blueTraffic },
-      },
+        AdditionalVersionWeights: {
+          [blueVersion.toString()]: blueTraffic
+        }
+      }
     })
   );
-
   console.log(
-    `Deployed new version ${newVersion} with ${blueTraffic * 100}% to blue (${blueVersion})`
+    `New deployment version ${newVersion} as green. Blue version ${blueVersion} now has ${blueTraffic * 100}% traffic.`
   );
 }
 
-// Usage:
+// Example usage:
 blueGreenDeploy({
   functionName: "inverto-lambda-function",
   greenAlias: "Green",
-  blueTraffic: 0.3,
+  blueTraffic: 0.5,
   deploymentPackagePath: "./dist/handler.zip",
 });

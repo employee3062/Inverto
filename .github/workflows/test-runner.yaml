@@ -9,9 +9,7 @@ jobs:
   running-tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-      - name: Default Setup
-        uses: ./.github/actions/default-setup
-      - name: Run tests
-        run: bun test
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/default-setup
+      - name: Run unit and integration tests
+        run: bun test --coverage

@@ -1,20 +1,16 @@
-name: Auto Deploy to AWS
+name: Auto rollback traffic from green to blue.
 on:
-  push:
-    paths:
-      - 'src/**'
-    branches:
-      - main
+  workflow_dispatch:
 permissions:
-  id-token: write   # Required for OIDC
+  id-token: write 
   contents: read
 jobs:
-  deploy:
+  auto-rollback:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/aws-setup
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-      - name: Publish Code automatically to Lambda
-        run: bun run push
+      - name: Perform Auto Rollback
+        run: bun run rollback
