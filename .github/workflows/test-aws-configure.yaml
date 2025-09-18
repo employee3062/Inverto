@@ -1,6 +1,9 @@
 name: Test AWS Configure
 on:
   workflow_dispatch:
+permissions:
+  id-token: write   # Required for OIDC
+  contents: read
 jobs:
   test-aws-configure:
     runs-on: ubuntu-latest
