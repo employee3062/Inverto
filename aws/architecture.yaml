@@ -404,10 +404,10 @@ Resources:
           - Effect: Allow
             Principal:
               Federated: !GetAtt GithubOidc.Arn
-            Action: sts:AssumeRole
+            Action: sts:AssumeRoleWithWebIdentity
             Condition:
               StringLike:
-                token.actions.githubusercontent.com:sub: "repo:employee3062/Inverto:ref:refs/heads/main"
+                token.actions.githubusercontent.com:sub: "repo:employee3062/Inverto:main"
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
       Policies:
