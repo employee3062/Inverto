@@ -73,7 +73,7 @@ Resources:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !GetAtt ApiGateway.RootResourceId
-      PathPart: swagger/*
+      PathPart: swagger
       RestApiId: !Ref ApiGateway
   SwaggerProxyResource:
     Type: AWS::ApiGateway::Resource
