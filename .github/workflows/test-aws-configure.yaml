@@ -12,5 +12,5 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: ca-central-1
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: arn:aws:iam::659271373941:role/inverto-stack-GithubOidcRole-jlfHeYH1OlEs
           role-session-name: GitHubActions
