@@ -14,3 +14,9 @@ jobs:
           aws-region: ca-central-1
           role-to-assume: arn:aws:iam::659271373941:role/inverto-stack-GithubOidcRole-jlfHeYH1OlEs
           role-session-name: GitHubActions
+  example:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Conditional step based on secret
+        if: ${{ secrets.AWS_ROLE_TO_ASSUME == 'arn:aws:iam::659271373941:role/inverto-stack-GithubOidcRole-jlfHeYH1OlEs' }}
+        run: echo "Secret matches the expected value"
