@@ -10,6 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up default state
-        uses: ./.github/actions/default-state.action.yaml
+        uses: ./.github/actions/default-state
       - name: Run tests
         run: bun test
