@@ -17,6 +17,9 @@ jobs:
   example:
     runs-on: ubuntu-latest
     steps:
+      - name: Set AWS_ROLE_TO_ASSUME env
+        run: echo "AWS_ROLE_TO_ASSUME=${{ secrets.AWS_ROLE_TO_ASSUME }}" >> $GITHUB_ENV
+
       - name: Conditional step based on secret
-        if: ${{ secrets.AWS_ROLE_TO_ASSUME == 'arn:aws:iam::659271373941:role/inverto-stack-GithubOidcRole-jlfHeYH1OlEs' }}
+        if: env.AWS_ROLE_TO_ASSUME == 'arn:aws:iam::659271373941:role/inverto-stack-GithubOidcRole-jlfHeYH1OlEs'
         run: echo "Secret matches the expected value"
