@@ -10,12 +10,17 @@ jobs:
     steps:
       - name: Set AWS_ROLE_TO_ASSUME env
         run: echo "AWS_ROLE_TO_ASSUME=${{ secrets.AWS_ROLE_TO_ASSUME }}" >> $GITHUB_ENV
+
+      - name: Debug AWS_ROLE_TO_ASSUME
+        run: echo "AWS_ROLE_TO_ASSUME='${AWS_ROLE_TO_ASSUME}'"
+        
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: ca-central-1
-          role-to-assume: env.AWS_ROLE_TO_ASSUME
+          role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
           role-session-name: GitHubActions
+
   example:
     runs-on: ubuntu-latest
     steps:
