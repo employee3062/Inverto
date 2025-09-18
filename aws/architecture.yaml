@@ -51,17 +51,11 @@ Resources:
       SecurityPolicy: TLS_1_2
 
   # create methods and resources for the api gateway
-  HealthResource:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      ParentId: !GetAtt ApiGateway.RootResourceId
-      PathPart: health
-      RestApiId: !Ref ApiGateway
   HealthMethod:
     Type: AWS::ApiGateway::Method
     Properties:
       HttpMethod: GET
-      ResourceId: !Ref HealthResource
+      ResourceId: !GetAtt ApiGateway.RootResourceId
       RestApiId: !Ref ApiGateway
       AuthorizationType: NONE
       ApiKeyRequired: false
@@ -71,16 +65,10 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}:Green/invocations
 
-  AuthResource:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      ParentId: !GetAtt ApiGateway.RootResourceId
-      PathPart: auth
-      RestApiId: !Ref ApiGateway
   SigninResource:
     Type: AWS::ApiGateway::Resource
     Properties:
-      ParentId: !Ref AuthResource
+      ParentId: !GetAtt ApiGateway.RootResourceId
       PathPart: signin
       RestApiId: !Ref ApiGateway
   ApiAuthSigninMethod:
@@ -285,6 +273,7 @@ Resources:
   # we need one permission for the lambda to be invoked by api gateway
   LambdaPermissionForApiGateway:
     Type: AWS::Lambda::Permission
+    DependsOn: LambdaAlias
     Properties:
       FunctionName: !Sub ${LambdaFunction.Arn}:Green
       Action: lambda:InvokeFunction
@@ -369,6 +358,44 @@ Resources:
     Properties:
       Name: Green
       FunctionName: !Ref LambdaFunction
-      FunctionVersion: $LATEST
+      FunctionVersion: !GetAtt LambdaVersion.Version
 
+  # create a role for github oidc which is able to push to lambda-function, publish version and also change aliases and weights
+  GithubOidcRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !GetAtt GithubOidc.Arn
+            Action: sts:AssumeRole
+            Condition:
+              StringLike:
+                token.actions.githubusercontent.com:sub: "repo:employee3062/Inverto:ref:refs/heads/main"
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+      Policies:
+        - PolicyName: GithubActions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:UpdateFunctionCode
+                  - lambda:PublishVersion
+                  - lambda:UpdateAlias
+                  - lambda:GetAlias
+                  - lambda:GetFunction
+                Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaFunction}
 
+  # setting up OIDC provider for github so we can use github actions to deploy
+  GithubOidc:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      ThumbprintList:
+        - 6938fd4d98bab03faadb97b34396831e3780aea1

@@ -25,5 +25,7 @@
         "!Sub scalar",
         "!Transform mapping",
         "!Ref scalar",
-    ]
+    ],
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python-envs.pythonProjects": []
 }

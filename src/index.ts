@@ -2,9 +2,8 @@ import { Elysia , t} from "elysia";
 import { swagger } from '@elysiajs/swagger'
 
 const app = new Elysia()
-.get("/", () => "It's Inverto")
-.get("/health", () => "It's Inverto")
-.post("/auth/signin",({body}) => {
+.get("/", () => "It's Inverto 9")
+.post("/signin",({body}) => {
   return `Created user ${body.username} with password ${body.password}.`
 } ,{
   body:t.Object({
