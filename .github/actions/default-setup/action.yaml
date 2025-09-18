@@ -1,10 +1,8 @@
-name: Default State
-description: Sets the default state by installing nodemodules after checking out the code.
+name: Default Setup
+description: Sets the default state by installing nodemodules for the bun project and also uses caching to speed up the process.
 runs:
   using: "composite"
   steps:
-    - name: Checkout code
-      uses: actions/checkout@v5
     - name: Set up bun
       uses: oven-sh/setup-bun@v2
       with:
