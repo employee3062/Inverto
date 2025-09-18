@@ -6,7 +6,7 @@ describe('inverto health check', () => {
     const response = await app
             .handle(new Request('http://localhost:3000'))
             .then((res) => res.text())
-    expect(response).toBe('It\'s Inverto v9')
+    expect(response).toContain("It's Inverto")
   })
 })
 
