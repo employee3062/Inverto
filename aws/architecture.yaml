@@ -73,13 +73,19 @@ Resources:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !GetAtt ApiGateway.RootResourceId
-      PathPart: swagger
+      PathPart: swagger/*
+      RestApiId: !Ref ApiGateway
+  SwaggerProxyResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref SwaggerResource
+      PathPart: "{proxy+}"
       RestApiId: !Ref ApiGateway
   SwaggerMethod:
     Type: AWS::ApiGateway::Method
     Properties:
       HttpMethod: GET
-      ResourceId: !Ref SwaggerResource
+      ResourceId: !Ref SwaggerProxyResource
       RestApiId: !Ref ApiGateway
       AuthorizationType: NONE
       ApiKeyRequired: false
