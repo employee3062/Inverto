@@ -23,7 +23,7 @@ jobs:
           role-to-assume: ${{ env.ROLE_TO_ASSUME }}
           role-session-name: GitHubActions
       - name: Default State Setup
-        uses: ./.github/actions/default-state.action.yaml
+        uses: ./.github/actions/default-state
       - name: Deploy to Lambda
         run: bun run push
     
