@@ -6,5 +6,9 @@
   {
     "ParameterKey": "CertificateArn",
     "ParameterValue": "arn:aws:acm:ca-central-1:659271373941:certificate/7cac4fe3-aba5-4457-a46e-0e5c5a4e6f85"
+  },
+  {
+    "ParameterKey": "ChangeHash",
+    "ParameterValue": "102"
   }
 ]
