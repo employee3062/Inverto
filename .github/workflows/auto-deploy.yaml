@@ -22,8 +22,10 @@ jobs:
           aws-region: ca-central-1
           role-to-assume: ${{ env.ROLE_TO_ASSUME }}
           role-session-name: GitHubActions
-      - name: Default State Setup
-        uses: ./.github/actions/default-state
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Default Setup
+        uses: ./.github/actions/default-setup
       - name: Deploy to Lambda
         run: bun run push
     
