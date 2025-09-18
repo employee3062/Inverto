@@ -15,6 +15,10 @@ Parameters:
     Type: String
     Description: The name of the Lambda function to integrate with API Gateway
     Default: inverto-lambda-function
+  ChangeHash:
+    Type: String
+    Description: A hash value to force redeployment of API Gateway resources when changed
+    Default: "100"
 Resources:
   # we will need an rest api gateway at first
   ApiGateway:
@@ -56,6 +60,26 @@ Resources:
     Properties:
       HttpMethod: GET
       ResourceId: !GetAtt ApiGateway.RootResourceId
+      RestApiId: !Ref ApiGateway
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: AWS_PROXY
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}:Green/invocations
+
+  SwaggerResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: swagger
+      RestApiId: !Ref ApiGateway
+  SwaggerMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: GET
+      ResourceId: !Ref SwaggerResource
       RestApiId: !Ref ApiGateway
       AuthorizationType: NONE
       ApiKeyRequired: false
@@ -114,8 +138,11 @@ Resources:
       - HealthMethod
       - ApiAuthSigninMethod
       - CatchAllMethod
+      - SwaggerMethod
     Properties:
       RestApiId: !Ref ApiGateway
+    Metadata:
+      ChangeHash: !Ref ChangeHash
   
   # we will need a log group for the api gateway
   ApiLogGroup:
@@ -158,7 +185,6 @@ Resources:
         - ApiId: !Ref ApiGateway
           Stage: prod
       
-
   GoldPlan:
     DependsOn: ApiGatewayStageWithLogs
     Type: AWS::ApiGateway::UsagePlan

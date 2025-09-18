@@ -1,12 +1,22 @@
 name: Auto Deploy to AWS
 on:
   push:
+    paths:
+      - 'src/**'
     branches:
       - main
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Dummy Step
-        run: echo "This is a placeholder for the auto-deploy workflow."
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5.0.0
+        with:
+          aws-region: ca-central-1
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }} 
+          role-session-name: GitHubActions
+      - name: Default State Setup
+        uses: ./.github/actions/default-state.action.yaml
+      - name: Deploy to Lambda
+        run: bun run push
     
