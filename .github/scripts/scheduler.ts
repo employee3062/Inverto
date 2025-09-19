@@ -4,7 +4,7 @@ import {
   UpdateAliasCommand,
 } from "@aws-sdk/client-lambda";
 
-import { getSortedBlueGreenVersions } from "./lib";
+import { getSortedBlueGreenVersions, functionName } from "./lib";
 
 const lambda = new LambdaClient({ region: "ca-central-1" });
 
@@ -55,7 +55,6 @@ async function scheduler({
       },
     })
   );
-
   console.log(
     `Traffic shifted: green version ${green.version} now ${newGreenTraffic * 100}%, blue version ${blue.version} now ${newBlueTraffic * 100}%`
   );
@@ -63,5 +62,5 @@ async function scheduler({
 
 // Example usage:
 scheduler({
-  functionName: "inverto-lambda-function",
+  functionName
 });

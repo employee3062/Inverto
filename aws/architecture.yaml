@@ -15,10 +15,6 @@ Parameters:
     Type: String
     Description: The name of the Lambda function to integrate with API Gateway
     Default: inverto-lambda-function
-  ChangeHash:
-    Type: String
-    Description: A hash value to force redeployment of API Gateway resources when changed
-    Default: "100"
 Resources:
   # we will need an rest api gateway at first
   ApiGateway:
@@ -160,8 +156,6 @@ Resources:
       - SwaggerProxyMethod
     Properties:
       RestApiId: !Ref ApiGateway
-    Metadata:
-      ChangeHash: !Ref ChangeHash
   
   # we will need a log group for the api gateway
   ApiLogGroup:
@@ -186,8 +180,6 @@ Resources:
       AccessLogSetting:
         DestinationArn: !GetAtt ApiLogGroup.Arn
         Format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","caller":"$context.identity.caller","user":"$context.identity.user","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}'
-    Metadata:
-      ChangeHash: !Ref ChangeHash
 
   # create usage plans and assign it with stage prod
   SilverPlan:

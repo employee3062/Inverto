@@ -7,7 +7,7 @@ import {
   GetFunctionCommand,
 } from "@aws-sdk/client-lambda";
 import { readFile } from "fs/promises";
-import { getSortedBlueGreenVersions } from "./lib";
+import { getSortedBlueGreenVersions, functionName } from "./lib";
 
 const lambda = new LambdaClient({ region: "ca-central-1" });
 
@@ -90,7 +90,7 @@ async function blueGreenDeploy({
 
 // Example usage:
 blueGreenDeploy({
-  functionName: "inverto-lambda-function",
+  functionName,
   greenAlias: "Green",
   blueTraffic: 0.5,
   deploymentPackagePath: "./dist/handler.zip",

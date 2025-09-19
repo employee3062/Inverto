@@ -1,7 +1,8 @@
 name: Auto schedules traffic shifting from blue to green every 10 mins
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '30 2 * * *'    # 2:30 AM UTC = 10:30 PM EDT (Ottawa)
+    - cron: '30 14 * * *'   # 2:30 PM UTC = 10:30 AM EDT (Ottawa)
   workflow_dispatch:
 permissions:
   id-token: write

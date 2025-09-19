@@ -4,6 +4,8 @@ export interface VersionTraffic {
   traffic: number; 
 }
 
+export const functionName = "inverto-lambda-function";
+
 import { GetAliasCommandOutput } from "@aws-sdk/client-lambda";
 
 export function getSortedBlueGreenVersions(
