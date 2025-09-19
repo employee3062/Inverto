@@ -4,7 +4,7 @@ import {
   UpdateAliasCommand,
 } from "@aws-sdk/client-lambda";
 
-import { getSortedBlueGreenVersions, VersionTraffic } from "./lib";
+import { getSortedBlueGreenVersions, functionName} from "./lib";
 
 const lambda = new LambdaClient({ region: "ca-central-1" });
 
@@ -54,5 +54,5 @@ async function rollback({
 
 // Example usage:
 rollback({
-  functionName: "inverto-lambda-function",
+  functionName
 });
