@@ -4,7 +4,7 @@ export interface VersionTraffic {
   traffic: number; 
 }
 
-export const functionName = "inverto-lambda-function";
+export const functionName = "inverto-function";
 
 import { GetAliasCommandOutput } from "@aws-sdk/client-lambda";
 

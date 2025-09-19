@@ -92,6 +92,6 @@ async function blueGreenDeploy({
 blueGreenDeploy({
   functionName,
   greenAlias: "Green",
-  blueTraffic: 0.5,
+  blueTraffic: 0.3,
   deploymentPackagePath: "./dist/handler.zip",
 });

@@ -2,6 +2,7 @@ import {
   LambdaClient,
   GetAliasCommand,
   UpdateAliasCommand,
+  DeleteFunctionCommand,
 } from "@aws-sdk/client-lambda";
 
 import { getSortedBlueGreenVersions, functionName} from "./lib";
@@ -38,18 +39,23 @@ async function rollback({
     new UpdateAliasCommand({
       FunctionName: functionName,
       Name: greenAlias,
-      FunctionVersion: blue.version.toString(), // alias primary points to blue version
-      RoutingConfig: {
-        AdditionalVersionWeights: {
-          [green.version.toString()]: 0,
-        },
-      },
+      FunctionVersion: blue.version.toString(), // alias primary points to blue
+      RoutingConfig: {},
     })
   );
-
   console.log(
     `Rollback complete: traffic shifted 100% to blue version ${blue.version}, 0% to green version ${green.version}`
   );
+
+  // deleting the green version so that it doesn't collide with the next auto deployment where second last is considered stable blue.
+  // 3. Delete the rolled-back green version to clean up unused versions
+  await lambda.send(
+    new DeleteFunctionCommand({
+      FunctionName: functionName,
+      Qualifier: green.version.toString(),
+    })
+  );
+  console.log(`Deleted rolled-back green version ${green.version}`);
 }
 
 // Example usage:
