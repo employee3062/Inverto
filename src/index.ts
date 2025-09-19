@@ -2,7 +2,7 @@ import { Elysia , t} from "elysia";
 import { swagger } from '@elysiajs/swagger'
 
 const app = new Elysia()
-.get("/", () => "It's Inverto v13")
+.get("/", () => "It's Inverto v15")
 .post("/signin",({body}) => {
   return `Created user ${body.username} with password ${body.password}.`
 } ,{
