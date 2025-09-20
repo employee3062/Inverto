@@ -1,6 +1,6 @@
 import { test, expect, describe, mock } from "bun:test";
 import { CognitoIdentityProviderClient, InitiateAuthCommand } from "@aws-sdk/client-cognito-identity-provider";
-import { handleTrial, CredentialsDTO } from "../classes/auth"; 
+import { handleTrial, CredentialsDTO,signIn, autoSignIn } from "../classes/auth"; 
 
 const dummyCommand = new InitiateAuthCommand({
   AuthFlow: "USER_PASSWORD_AUTH",
@@ -62,21 +62,25 @@ const testCases = [
   }
 ];
 
-describe("handleTrial function tests", () => {
+describe("handleTrial", () => {
   testCases.forEach(({ name, mockReturn, expectResult, expectError }) => {
     test(`${name}`, async () => {
       const client = new CognitoIdentityProviderClient({ region: "ca-central-1" });
       client.send = mock(() => mockReturn());
-      try {
+      if (expectResult) {
         const resp = await handleTrial(dummyCommand, client);
-        if (expectResult) {
-          expect(resp).toEqual(expectResult);
-        } else {
-          throw new Error("Expected a successful response but got an error.");
-        }
-      } catch (e: any) {
-        expect(e.message).toBe(expectError);
+        expect(resp).toEqual(expectResult);
+      } else if (expectError) {
+        expect(handleTrial(dummyCommand, client)).rejects.toThrow(expectError);
       }
     });
+  });
+});
+
+describe("signIn & autoSignIn", () => {
+  test("throws error if CLIENT_ID is not defined", async () => {
+    process.env.CLIENT_ID = "";
+    expect(signIn("test", "test")).rejects.toThrow("client id is not defined");
+    expect(autoSignIn("dummy-refresh-token")).rejects.toThrow("client id is not defined");
   });
 });
