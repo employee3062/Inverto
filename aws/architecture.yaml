@@ -351,6 +351,25 @@ Resources:
         - Name: phone_number
           Required: false
           Mutable: true
+    
+    # auth setting for the user pool clients
+  InvertoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: inverto-user-pool-client
+      UserPoolId: !Ref InvertoUserPool
+      GenerateSecret: false
+      RefreshTokenValidity: 30            # Number of days the refresh token is valid
+      AccessTokenValidity: 1              # Number of days for access token validity
+      IdTokenValidity: 1                  # Number of days for id token validity
+      TokenValidityUnits:
+        AccessToken: "days"
+        IdToken: "days"
+        RefreshToken: "days"
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+
 
   # create a lambda function for handling requests and it's layers,version,alias
   BunLayer:
